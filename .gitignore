@@ -13,5 +13,7 @@
 *.log
 .vscode/
 .idea/
-# Env / secrets
+# Django local only
+/backend/.env
+/backend/db.sqlite3
 
