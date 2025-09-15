@@ -1,6 +1,9 @@
 ﻿# Python
+**/.venv/
+**/venv/
 **/__pycache__/
 *.pyc
+*.py[cod]
 #Node
 **/node_modules/
 **/dist/
@@ -10,3 +13,5 @@
 *.log
 .vscode/
 .idea/
+# Env / secrets
+
