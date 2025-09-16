@@ -106,11 +106,20 @@ REST_FRAMEWORK = {
         "rest_framework.filters.OrderingFilter",
         "rest_framework.filters.SearchFilter",
     ],
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.IsAuthenticated",
+    ]
 
 }
 
-SPECTACULAR_SETTINGS = {
+SPECTACULAR_SETTINGS = ({
     "TITLE": "Edu Diary API",
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
-}
+    "SECURITY": [{"bearerAuth": []}],
+    "COMPONENTS": {
+        "securitySchemes": {
+            "bearerAuth": {"type": "http", "scheme": "bearer", "bearerFormat": "JWT"}
+        }
+    },
+})

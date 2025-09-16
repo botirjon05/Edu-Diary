@@ -15,3 +15,7 @@ class SubjectViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Subject.objects.all().order_by("name")
     serializer_class = SubjectSerializer
     permission_classes = [permissions.AllowAny]
+    filterset_fields = ["is_active"]
+    search_fields = ["code", "name", "description"]
+    ordering_fields = ["name", "code", "created_at"]
+    ordering = ["name"]
