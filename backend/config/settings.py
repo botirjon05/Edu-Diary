@@ -22,6 +22,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework_simplejwt",
     "drf_spectacular",
+    "django_filters",
 
     # Local
     "core",
@@ -96,10 +97,16 @@ CORS_ALLOWED_ORIGINS = [os.getenv("CORS_ORIGIN", "http://localhost:5173")]
 
 # DRF / JWT / OpenAPI
 REST_FRAMEWORK = {
-    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
-    "DEFAULT_AUTHENTICATION_CLASSES": [
+    "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ),
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    "DEFAULT_FILTER_BACKENDS": [
+        "django_filters.rest_framework.DjangoFilterBackend",
+        "rest_framework.filters.OrderingFilter",
+        "rest_framework.filters.SearchFilter",
     ],
+
 }
 
 SPECTACULAR_SETTINGS = {
