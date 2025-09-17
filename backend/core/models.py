@@ -1,4 +1,5 @@
 from django.db import models
+from django.core.validators import MinValueValidator, MaxValueValidator
 
 class Subject(models.Model):
     code = models.CharField(max_length=20, unique = True)
@@ -91,6 +92,63 @@ class Enrollment(models.Model):
 
     def __str__(self) -> str:
         return f"{self.student} → {self.subject} ({self.academic_year})"
+    
+class Attendance (models.Model):
+    class Status(models.TextChoices):
+        PRESENT = "P", "Present"
+        ABSENT = "A", "Absent"
+        LATE = "L", "Late"
+        EXCUSED = "E", "Excused"
+
+    enrollment = models.ForeignKey("Enrollment", related_name="attendance", on_delete=models.CASCADE)
+    date = models.DateField()
+    status = models.CharField(max_length=1, choices=Status.choices, default=Status.PRESENT)
+    notes = models.CharField(max_length=255, blank=True)
+    recorded_by = models.ForeignKey("Teacher", related_name="attendance_records", on_delete=models.SET_NULL, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-date", "enrollment__student__last_name"]
+        constraints = [models.UniqueConstraint(fields=["enrollment", "date"], name="uniq_attendance_enrollment_date")]
+        indexes = [models.Index(fields=["date"]), models.Index(fields=["status"]),]
+
+    def __str__(self):
+        s = self.get_status_display()
+        return f"{self.enrollment} @ {self.date} → {s}"
+    
+class Assignment(models.Model):
+    subject = models.ForeignKey("Subject", related_name= "assignments", on_delete= models.CASCADE)
+    academic_year = models.CharField(max_length=9)
+    title = models.CharField(max_length=120)
+    description = models.TextField(blank=True)
+    due_date = models.DateField(null=True, blank=True)
+    max_points = models.PositiveIntegerField(default=100, validators=[MinValueValidator(1)])
+    created_by = models.ForeignKey("Teacher", related_name="created_assignments", on_delete=models.SET_NULL, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at =models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-due_date", "-created_at"]
+
+    def __str__(self):
+        return f"{self.title} ({self.subject.code})"
+    
+class Grade(models.Model):
+    assignment = models.ForeignKey("Assignment", related_name="grades", on_delete=models.CASCADE)
+    enrollment = models.ForeignKey("Enrollment", related_name="grades", on_delete=models.CASCADE)
+    score = models.DecimalField(max_digits=6, decimal_places=2, validators=[MinValueValidator(0)])
+    feedback = models.CharField(max_length=255, blank=True)
+    graded_by = models.ForeignKey("Teacher", related_name="grades_given", on_delete=models.SET_NULL, null=True, blank=True)
+    submitted_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-submitted_at"]
+        constraints = [models.UniqueConstraint(fields=["assignment", "enrollment"], name = "uniq_grade_assignment_enrollment")]
+
+    def __str__(self):
+        return f"{self.enrollment} → {self.assignment}: {self.score}"
+    
 
 
  

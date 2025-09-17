@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Subject, Teacher, Classroom, Student, Enrollment
+from .models import Subject, Teacher, Classroom, Student, Enrollment, Attendance, Assignment, Grade
 
 class SubjectSerializer(serializers.ModelSerializer):
     class Meta:
@@ -41,3 +41,38 @@ class EnrollmentSerializer(serializers.ModelSerializer):
         model = Enrollment
         fields = "__all__"
         read_only_fields = ("id", "created_at", "updated_at")
+
+class AttendanceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Attendance
+        fields = "__all__"
+        read_only_fields = ("id", "created_at", "updated_at")
+
+    def validate(self, attrs):
+        return attrs
+    
+class AssignmentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Assignment
+        fields = "__all__"
+        read_only_fields = ("id", "created_at", "updated_at")
+
+class GradeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Grade
+        fields = "__all__"
+        read_only_fields = ("id", "submitted_at")
+
+    def validate(self, attrs):
+        assignment = attrs.get("assignment") or self.instance.assignment
+        enrollment = attrs.get("enrollment") or self.instance.enrollment
+
+        if assignment.subject_id != enrollment.subject_id:
+            raise serializers.ValidationError("Assignment subject and enrollment subject must match")
+        if assignment.academic_year != enrollment.academic_year:
+            raise serializers.ValidationError("Assignment year and enrollment year must match")
+        
+        score = attrs.get("score")
+        if score is not None and score > assignment.max_points:
+            raise serializers.ValidationError("Score cannot exceed assignment max_points")
+        return attrs
