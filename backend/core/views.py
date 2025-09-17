@@ -3,8 +3,8 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework import viewsets, permissions
-from .models import Subject, Teacher, Classroom
-from .serializers import SubjectSerializer, TeacherSerializer, ClassroomSerializer
+from .models import Subject, Teacher, Classroom, Student, Enrollment
+from .serializers import SubjectSerializer, TeacherSerializer, ClassroomSerializer, StudentSerializer, EnrollmentSerializer
 
 @api_view(["GET"])
 @permission_classes([AllowAny])
@@ -37,3 +37,21 @@ class ClassroomViewSet(viewsets.ModelViewSet):
     search_fields = ["name"]
     ordering_fields = ["grade_level", "name", "created_at"]
     ordering = ["grade_level", "name"]
+
+class StudentViewSet(viewsets.ModelViewSet):
+    queryset = Student.objects.all().select_related("classroom")
+    serializer_class = StudentSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    filterset_fields = ["is_active", "gender", "classroom"]
+    search_fields = ["first_name", "last_name", "email", "phone"," guardian_name", "guardian_phone"]
+    ordering_fields = ["last_name", "first_name", "date_of_birth", "created_at"]
+    ordering = ["last_name", "first_name"]
+
+class EnrollmentViewSet(viewsets.ModelViewSet):
+    queryset = Enrollment.objects.all().select_related("student", "subject", "teacher")
+    serializer_class = EnrollmentSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    filterset_fields = ["active", "academic_year", "student", "subject", "teacher"]
+    search_fields = ["academic_year", "student__first_name", "student__last_name", "subject__name", "subject__code", "teacher__first_name", "teacher__last_name", ]
+    ordering_fields = ["academic_year", "created_at", "updated_at"]
+    ordering = ["-academic_year", "student__last_name"]
