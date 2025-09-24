@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Subject, Teacher, Classroom, Student, Enrollment, Attendance, Assignment, Grade
+from .models import Subject, Teacher, Classroom, Student, Enrollment, Attendance, Assignment, Grade, Announcement
 
 class SubjectSerializer(serializers.ModelSerializer):
     class Meta:
@@ -80,3 +80,24 @@ class GradeSerializer(serializers.ModelSerializer):
         if score is not None and score > assignment.max_points:
             raise serializers.ValidationError("Score cannot exceed assignment max_points")
         return attrs
+    
+
+class AnnouncementSerializer(serializers.ModelSerializer):
+    author = serializers.ReadOnlyField(source = "created_by.username")
+    subject_name = serializers.ReadOnlyField(source = "subject.name")
+
+    class Meta: 
+        model = Announcement
+        fields = ["id", "subject", "subject_name", "title", "body", "is_pinned", "visible_from", "visible_to", "author", "created_at", "updated_at", ]
+        read_only_fields = ("author", "created_at", "updated_at")
+
+    def validate(self, attrs):
+        start = attrs.get("visible_from")
+        end = attrs.get("visible_to")
+        if start and end and end < start:
+            raise serializers.ValidationError("visible_to must be after visible_from")
+        return attrs
+    
+    def create(self, validated_data):
+        validated_data["created_by"] = self.context["request"].user
+        return super().create(validated_data)

@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Subject, Teacher, Classroom, Student, Enrollment, Attendance, Assignment, Grade
+from .models import Subject, Teacher, Classroom, Student, Enrollment, Attendance, Assignment, Grade, Announcement
 
 @admin.register(Subject)
 class SubjectAdmin(admin.ModelAdmin):
@@ -48,3 +48,10 @@ class GradeAdmin(admin.ModelAdmin):
     list_display = ("assignment", "enrollment", "score", "graded_by", "submitted_at")
     list_filter = ("assignment__subject", "assignment__academic_year")
     search_fields = ("feedback", "enrollment__student__first_name", "enrollment__student__last_name", "assignment__title", )
+
+@admin.register(Announcement)
+class AnnouncementAdmin(admin.ModelAdmin):
+    list_display = ("title", "subject", "is_pinned", "created_by", "created_at")
+    list_filter = ("is_pinned", "subject")
+    search_fields = ("title", "body", "subject__name", "created_by__username")
+    ordering = ("-is_pinned", "-created_at")

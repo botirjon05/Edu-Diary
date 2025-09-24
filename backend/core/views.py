@@ -1,10 +1,12 @@
 from django.shortcuts import render
 from rest_framework.decorators import api_view, permission_classes, action
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser, SAFE_METHODS
 from rest_framework.response import Response
 from rest_framework import viewsets, permissions
-from .models import Subject, Teacher, Classroom, Student, Enrollment, Attendance, Assignment, Grade
-from .serializers import SubjectSerializer, TeacherSerializer, ClassroomSerializer, StudentSerializer, EnrollmentSerializer, AttendanceSerializer, AssignmentSerializer, GradeSerializer
+from django.db.models import Q
+from django.utils import timezone
+from .models import Subject, Teacher, Classroom, Student, Enrollment, Attendance, Assignment, Grade, Announcement
+from .serializers import SubjectSerializer, TeacherSerializer, ClassroomSerializer, StudentSerializer, EnrollmentSerializer, AttendanceSerializer, AssignmentSerializer, GradeSerializer, AnnouncementSerializer
 
 @api_view(["GET"])
 @permission_classes([AllowAny])
@@ -106,3 +108,48 @@ class GradeViewSet(viewsets.ModelViewSet):
     
     def perform_create(self, serializer):
         serializer.save(graded_by = self.request.user)
+
+
+class AnnouncementViewSet(viewsets.ModelViewSet):
+    serializer_class = AnnouncementSerializer
+    queryset = Announcement.objects.select_related("subject", "created_by")
+    permission_classes = [IsAuthenticated]
+    filterset_fields = ["subject", "is_pinned"]
+    search_fields = ["title", "body", "subject__name", "created_by__username"]
+    ordering = ["-is_pinned", "-created_at"]
+
+    def get_permissions(self):
+        if self.request.method in SAFE_METHODS:
+            return [IsAuthenticated()]
+        return [IsAdminUser()]
+    
+    def get_queryset(self):
+        qs = super().get_queryset()
+        now = timezone.now()
+        return qs.filter(
+            Q(visible_from__isnull = True) | Q(visible_from__lte = now),
+            Q(visible_to__isnull = True) | Q(visible_to__gte = now),
+        )
+    
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def dashboard(request):
+    return Response({
+        "counts": {
+            "subjects": Subject.objects.count(),
+            "teachers": Teacher.objects.count(),
+            "classrooms": Classroom.objects.count(),
+            "students": Student.objects.count(),
+            "enrollments": Enrollment.objects.count(), 
+            "assignments": Assignment.objects.count(),
+            "grades": Grade.objects.count(),
+            "announcements": Announcement.objects.count(),  
+
+        },
+        "recent": {
+
+            "assignments": list(Assignment.objects.order_by("-created_at") [:5].values("id", "title", "subject_id", "created_at")),
+            "announcements": list(Announcement.objects.order_by("-is_pinned", "-created_at")[:5].values("id", "title", "subject_id", "is_pinned", "created_at")),
+
+        },
+    })

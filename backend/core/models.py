@@ -1,5 +1,7 @@
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
+from django.conf import settings
+from django.utils import timezone
 
 
 class Subject(models.Model):
@@ -149,4 +151,31 @@ class Grade(models.Model):
 
     def __str__(self):
         return f"{self.enrollment} → {self.assignment}: {self.score}"
+    
+class Announcement(models.Model):
+    subject = models.ForeignKey("Subject", related_name= "announcements", on_delete= models.CASCADE, null=True, blank=True, )
+    title = models.CharField(max_length= 200)
+    body = models.TextField()
+    is_pinned = models.BooleanField(default=False)
+    visible_from = models.DateTimeField(null=True, blank= True)
+    visible_to = models.DateTimeField(null=True, blank=True)
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, related_name= "announcement_created", on_delete=models.CASCADE, )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now= True)
+
+    class Meta:
+        ordering = ["-is_pinned", "-created_at"]
+        indexes = [models.Index(fields=["is_pinned", "-created_at"]), models.Index(fields=["subject", "-created_at"]), ]
+
+    def __str__(self):
+        scope = self.subject.name if self.subject_id else "All"
+        return f"[{scope}] {self.title}"
+    
+    def is_visible_now(self) -> bool:
+        now = timezone.now()
+        if self.visible_from and now < self.visible_from:
+            return False
+        if self.visible_to and now > self.visible_to:
+            return False
+        return True
     
