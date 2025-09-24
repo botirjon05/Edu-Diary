@@ -22,7 +22,7 @@ class ClassroomSerializer(serializers.ModelSerializer):
     class Meta:
         model = Classroom
         fields = "__all__"
-        read_only_field = ("id", "created_at", "updated_at")
+        read_only_fields = ("id", "created_at", "updated_at")
 
 class StudentSerializer(serializers.ModelSerializer):
     classroom = serializers.PrimaryKeyRelatedField(queryset = Classroom.objects.all(), allow_null = True, required = False)
@@ -64,8 +64,12 @@ class GradeSerializer(serializers.ModelSerializer):
         read_only_fields = ("id", "submitted_at")
 
     def validate(self, attrs):
-        assignment = attrs.get("assignment") or self.instance.assignment
-        enrollment = attrs.get("enrollment") or self.instance.enrollment
+        instance = getattr(self, "instance", None)
+        assignment = attrs.get("assignment") or (getattr(instance, "assignment", None))
+        enrollment = attrs.get("enrollment") or (getattr(instance, "enrollment", None))
+
+        if not assignment or not enrollment:
+            return attrs
 
         if assignment.subject_id != enrollment.subject_id:
             raise serializers.ValidationError("Assignment subject and enrollment subject must match")

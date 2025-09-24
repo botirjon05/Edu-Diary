@@ -47,4 +47,4 @@ class AssignmentAdmin(admin.ModelAdmin):
 class GradeAdmin(admin.ModelAdmin):
     list_display = ("assignment", "enrollment", "score", "graded_by", "submitted_at")
     list_filter = ("assignment__subject", "assignment__academic_year")
-    search_fields = ("feedback", "enrollment__student__first_name", "enrollment__student__last_name", "asssignment__title", )
+    search_fields = ("feedback", "enrollment__student__first_name", "enrollment__student__last_name", "assignment__title", )

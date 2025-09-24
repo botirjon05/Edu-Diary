@@ -43,7 +43,7 @@ class StudentViewSet(viewsets.ModelViewSet):
     serializer_class = StudentSerializer
     permission_classes = [permissions.IsAuthenticated]
     filterset_fields = ["is_active", "gender", "classroom"]
-    search_fields = ["first_name", "last_name", "email", "phone"," guardian_name", "guardian_phone"]
+    search_fields = ["first_name", "last_name", "email", "phone","guardian_name", "guardian_phone"]
     ordering_fields = ["last_name", "first_name", "date_of_birth", "created_at"]
     ordering = ["last_name", "first_name"]
 
@@ -92,7 +92,7 @@ class GradeViewSet(viewsets.ModelViewSet):
     filterset_fields = ["assignment", "assignment__subject", "assignment__academic_year", "enrollment", "enrollment__student", "enrollment__subject", ]
     search_fields = ["feedback", "enrollment__student__first_name", "enrollment__student__last_name", "assignment__title", ]
     ordering_fields = ["submitted_at", "score"]
-    ordering = ["-submittted_at"]
+    ordering = ["-submitted_at"]
 
     @action(detail=False, methods=["get"], url_path="avg")
     def average(self, request):
